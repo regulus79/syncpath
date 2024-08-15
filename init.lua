@@ -90,7 +90,7 @@ minetest.register_entity("syncpath:ride", {
                 self.object:set_pos(path_pos)
             else
                 syncpath.active = false
-                minetest.chat_send_all("[syncpath] Syncpath finished")
+                minetest.chat_send_all("[syncpath] Sync finished")
             end
         end
     end,
@@ -128,6 +128,9 @@ minetest.register_chatcommand("start_sync", {
         syncpath.active = true
         syncpath.starttime = minetest.get_us_time() / 1000000
 
+        if syncpath.music_handle then
+            minetest.sound_stop(syncpath.music_handle)
+        end
         syncpath.music_handle = minetest.sound_play({name = param}, {object = minetest.get_player_by_name(name)}, false)
 
         minetest.chat_send_player(name, "[syncpath] Sync started")
@@ -139,7 +142,9 @@ minetest.register_chatcommand("stop_sync", {
     func = function(name, param)
         syncpath.active = false
         minetest.get_player_by_name(name):set_detach(obj)
-        minetest.sound_stop(syncpath.music_handle)
+        if syncpath.music_handle then
+            minetest.sound_stop(syncpath.music_handle)
+        end
         minetest.chat_send_player(name, "[syncpath] Sync stopped")
     end
 })
@@ -148,11 +153,12 @@ minetest.register_chatcommand("stop_sync", {
 --- Visualization
 ---
 
+-- TODO fix beams disappearing
 minetest.register_entity("syncpath:path_beam", {
     initial_properties = {
         visual = "mesh",
         mesh = "cylinder.obj",
-        textures = {"default_dirt.png^[colorize:#ffffff99:alpha"},
+        textures = {"default_steel_block.png^[opacity:120"},
         use_texture_alpha = true,
     },
     on_activate = function(self, staticdata_serialized)
