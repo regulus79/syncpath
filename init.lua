@@ -121,17 +121,19 @@ minetest.register_chatcommand("toggle_sync", {
 minetest.register_chatcommand("start_sync", {
     description = "Start a sync ride, attach the player to the ride, and start the music",
     func = function(name, param)
+        local args = string.split(param, " ")
         local pos = minetest.get_player_by_name(name):get_pos()
         local obj = minetest.add_entity(pos, "syncpath:ride")
         minetest.get_player_by_name(name):set_attach(obj)
 
         syncpath.active = true
-        syncpath.starttime = minetest.get_us_time() / 1000000
+        local start_time_offset = tonumber(args[2] or 0) / 60 * syncpath.bpm
+        syncpath.starttime = minetest.get_us_time() / 1000000 - start_time_offset
 
         if syncpath.music_handle then
             minetest.sound_stop(syncpath.music_handle)
         end
-        syncpath.music_handle = minetest.sound_play({name = param}, {object = minetest.get_player_by_name(name)}, false)
+        syncpath.music_handle = minetest.sound_play({name = args[1] or ""}, {object = minetest.get_player_by_name(name), start_time = start_time_offset}, false)
 
         minetest.chat_send_player(name, "[syncpath] Sync started")
     end
