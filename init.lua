@@ -157,6 +157,10 @@ local setup_keyframe_hud_waypoints = function(player)
     player:get_meta():set_string("syncpath_waypoints", minetest.serialize(waypoint_ids))
 end
 
+---
+--- Visualization
+---
+
 local remove_keyframe_hud_waypoints = function(player)
     local waypoint_ids = minetest.deserialize(player:get_meta():get_string("syncpath_waypoints"))
     if waypoint_ids then
@@ -189,6 +193,9 @@ minetest.register_chatcommand("hide_keyframes", {
     end
 })
 
+---
+--- Keyframe manipulation
+---
 
 minetest.register_chatcommand("add_keyframe", {
     description = "Add a keyframe for the position of the ride at time <bar>, given by the current bpm.",
@@ -245,6 +252,19 @@ minetest.register_chatcommand("remove_keyframe", {
     end
 })
 
+---
+--- Debugging and testing
+---
+
+minetest.register_chatcommand("print_path", {
+    description = "Prints the path data in chat",
+    func = function(name)
+        for i, keyframe in ipairs(syncpath.path) do
+            minetest.chat_send_player(name, "Keyframe " .. i .. ": bar: " .. keyframe.bar .. ", position: " .. dump(keyframe.position))
+        end
+    end
+})
+
 minetest.register_chatcommand("view_bar", {
     description = "Teleport to the position on the path at the given bar",
     func = function(name, param)
@@ -272,6 +292,10 @@ minetest.register_chatcommand("view_time", {
     end
 })
 
+---
+--- Configuration
+---
+
 minetest.register_chatcommand("bpm", {
     description = "Show or set the bpm of the syncpath",
     func = function(name, param)
@@ -293,6 +317,10 @@ minetest.register_chatcommand("interp_mode", {
         end
     end
 })
+
+---
+--- Saving/Loading
+---
 
 minetest.register_chatcommand("save_path", {
     description = "Save the current path under <name>",
@@ -325,13 +353,3 @@ minetest.register_chatcommand("load_path", {
         end
     end
 })
-
-minetest.register_chatcommand("print_path", {
-    description = "Prints the path data in chat",
-    func = function(name)
-        for i, keyframe in ipairs(syncpath.path) do
-            minetest.chat_send_player(name, "Keyframe " .. i .. ": bar: " .. keyframe.bar .. ", position: " .. dump(keyframe.position))
-        end
-    end
-})
-
