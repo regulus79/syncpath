@@ -7,6 +7,9 @@ syncpath.active = false
 syncpath.starttime = 0
 syncpath.music_handle = nil
 
+syncpath.show_keyframes = true
+syncpath.show_path_beams = true
+
 local mod_storage = minetest.get_mod_storage()
 
 local lerp = function(pos1, pos2, t)
@@ -141,6 +144,74 @@ minetest.register_chatcommand("stop_sync", {
     end
 })
 
+---
+--- Visualization
+---
+
+minetest.register_entity("syncpath:path_beam", {
+    initial_properties = {
+        visual = "mesh",
+        mesh = "cylinder.obj",
+        textures = {"default_dirt.png^[colorize:#ffffff99:alpha"},
+        use_texture_alpha = true,
+    },
+    on_activate = function(self, staticdata_serialized)
+        local staticdata = minetest.deserialize(staticdata_serialized)
+        if not staticdata then
+            self.object:remove()
+            return
+        else
+            if staticdata.offset then
+                self.object:set_rotation(vector.dir_to_rotation(staticdata.offset))
+                local props = self.object:get_properties()
+                props.visual_size = vector.new(1, 1, vector.length(staticdata.offset)) * 10
+                self.object:set_properties(props)
+            end
+        end
+    end
+})
+
+local path_beams = {}
+
+local setup_path_beams = function()
+    for i, keyframe in ipairs(syncpath.path) do
+        if i < #syncpath.path then
+            table.insert(
+                path_beams,
+                minetest.add_entity(keyframe.position, "syncpath:path_beam", minetest.serialize({offset = syncpath.path[i+1].position - keyframe.position}))
+            )
+        end
+    end
+end
+
+local remove_path_beams = function()
+    for _, obj in pairs(path_beams) do
+        obj:remove()
+    end
+end
+
+local refresh_path_beams = function()
+    remove_path_beams()
+    if syncpath.show_path_beams then
+        setup_path_beams()
+    end
+end
+
+minetest.register_chatcommand("show_path_beams", {
+    description = "Show the path beam visualizations",
+    func = function(name)
+        syncpath.show_path_beams = true
+        refresh_path_beams()
+    end
+})
+
+minetest.register_chatcommand("hide_path_beams", {
+    description = "Hide the path beam visualizations",
+    func = function(name)
+        syncpath.show_path_beams = false
+        refresh_path_beams()
+    end
+})
 
 local setup_keyframe_hud_waypoints = function(player)
     local waypoint_ids = {}
@@ -156,10 +227,6 @@ local setup_keyframe_hud_waypoints = function(player)
     end
     player:get_meta():set_string("syncpath_waypoints", minetest.serialize(waypoint_ids))
 end
-
----
---- Visualization
----
 
 local remove_keyframe_hud_waypoints = function(player)
     local waypoint_ids = minetest.deserialize(player:get_meta():get_string("syncpath_waypoints"))
@@ -227,6 +294,7 @@ minetest.register_chatcommand("add_keyframe", {
             })
             minetest.chat_send_player(name, "[syncpath] Keyframe added on bar " .. bar .. " on index " .. insert_pos)
             refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+            refresh_path_beams()
         else
             minetest.chat_send_player(name, "[syncpath] Please provide a bar number to add this keyframe on")
         end
@@ -243,6 +311,7 @@ minetest.register_chatcommand("remove_keyframe", {
                     table.remove(syncpath.path, i)
                     minetest.chat_send_player(name, "[syncpath] Removed keyframe at bar " .. bar)
                     refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+                    refresh_path_beams()
                     break
                 end
             end
@@ -343,6 +412,8 @@ minetest.register_chatcommand("load_path", {
                 for i, keyframe in pairs(syncpath.path) do
                     keyframe.position = vector.new(keyframe.position.x, keyframe.position.y, keyframe.position.z)
                 end
+                refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+                refresh_path_beams()
                 minetest.chat_send_player(name, "[syncpath] Loaded path '"..param.."'")
             else
                 syncpath.path = {}
