@@ -8,7 +8,7 @@ syncpath.starttime = 0
 syncpath.music_handle = nil
 
 syncpath.show_keyframes = true
-syncpath.show_path_beams = true
+syncpath.show_path_beams = false
 
 local mod_storage = minetest.get_mod_storage()
 
@@ -71,8 +71,9 @@ end
 
 minetest.register_entity("syncpath:ride", {
     initial_properties = {
-        visual = "cube",
-        textures = {"default_dirt.png"},
+        visual_size = vector.new(0,0,0),
+        textures = {"default_dirt.png^[opacity:0"},
+        pointable = false,
         static_save = false,
     },
     on_rightclick = function(self, clicker)
@@ -91,6 +92,14 @@ minetest.register_entity("syncpath:ride", {
             else
                 syncpath.active = false
                 minetest.chat_send_all("[syncpath] Sync finished")
+            end
+        end
+        for _, obj in pairs(self.object:get_children()) do
+            if obj:is_player() and obj:get_player_control_bits() ~= 0 then
+                obj:set_detach()
+                minetest.sound_stop(syncpath.music_handle)
+                self.object:remove()
+                return
             end
         end
     end,
