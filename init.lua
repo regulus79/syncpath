@@ -189,7 +189,6 @@ minetest.register_entity("syncpath:path_beam", {
             end
             if staticdata.path_id then
                 self._path_id = staticdata.path_id
-                minetest.debug("New!", self._path_id)
             end
         end
     end,
@@ -198,7 +197,6 @@ minetest.register_entity("syncpath:path_beam", {
     end,
     on_step = function(self)
         if syncpath.random_path_id ~= self._path_id then
-            minetest.debug(self._path_id, syncpath.random_path_id)
             self.object:remove()
         end
     end
