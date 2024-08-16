@@ -10,6 +10,10 @@ syncpath.music_handle = nil
 syncpath.show_keyframes = true
 syncpath.show_path_beams = false
 
+syncpath.min_beam_segments = 4
+-- Using a random value every time the path beams are upadated so that the old entities know if they need to be removed.
+syncpath.random_path_id = nil
+
 local mod_storage = minetest.get_mod_storage()
 
 local lerp = function(pos1, pos2, t)
@@ -164,26 +168,38 @@ minetest.register_chatcommand("stop_sync", {
 --- Visualization
 ---
 
--- TODO fix beams disappearing
 minetest.register_entity("syncpath:path_beam", {
     initial_properties = {
         visual = "mesh",
         mesh = "cylinder.obj",
-        textures = {"default_steel_block.png^[opacity:120"},
+        textures = {"default_steel_block.png^[opacity:200"},
         use_texture_alpha = true,
     },
+    _path_id = -1,
+    _staticdata = nil,
     on_activate = function(self, staticdata_serialized)
+        self._staticdata = staticdata_serialized
         local staticdata = minetest.deserialize(staticdata_serialized)
-        if not staticdata then
-            self.object:remove()
-            return
-        else
+        if staticdata then
             if staticdata.offset then
                 self.object:set_rotation(vector.dir_to_rotation(staticdata.offset))
                 local props = self.object:get_properties()
-                props.visual_size = vector.new(1, 1, vector.length(staticdata.offset)) * 10
+                props.visual_size = vector.new(0.5, 0.5, vector.length(staticdata.offset)) * 10
                 self.object:set_properties(props)
             end
+            if staticdata.path_id then
+                self._path_id = staticdata.path_id
+                minetest.debug("New!", self._path_id)
+            end
+        end
+    end,
+    get_staticdata = function(self)
+        return self._staticdata
+    end,
+    on_step = function(self)
+        if syncpath.random_path_id ~= self._path_id then
+            minetest.debug(self._path_id, syncpath.random_path_id)
+            self.object:remove()
         end
     end
 })
@@ -191,12 +207,27 @@ minetest.register_entity("syncpath:path_beam", {
 local path_beams = {}
 
 local setup_path_beams = function()
+    -- Pick a new big number as the (hopefully) unique id for the new path beams
+    syncpath.random_path_id = math.random(10^10)
     for i, keyframe in ipairs(syncpath.path) do
         if i < #syncpath.path then
-            table.insert(
-                path_beams,
-                minetest.add_entity(keyframe.position, "syncpath:path_beam", minetest.serialize({offset = syncpath.path[i+1].position - keyframe.position}))
-            )
+            local beam_segments = syncpath.min_beam_segments
+            local total_distance = vector.distance(syncpath.path[i+1].position, keyframe.position)
+            if total_distance > 30 then
+                beam_segments = syncpath.min_beam_segments * total_distance / 30
+            end
+            for beamidx = 1, beam_segments do
+                local startbar = keyframe.bar + (beamidx - 1) / beam_segments * (syncpath.path[i+1].bar - keyframe.bar)
+                local endbar = keyframe.bar + (beamidx) / beam_segments * (syncpath.path[i+1].bar - keyframe.bar)
+                local starttime = startbar * 4 / syncpath.bpm * 60
+                local endtime = endbar * 4 / syncpath.bpm * 60
+                local startpos = path_function(starttime)
+                local endpos = path_function(endtime)
+                table.insert(
+                    path_beams,
+                    minetest.add_entity(startpos, "syncpath:path_beam", minetest.serialize({offset = endpos - startpos, path_id = syncpath.random_path_id}))
+                )
+            end
         end
     end
 end
@@ -398,6 +429,7 @@ minetest.register_chatcommand("interp_mode", {
     func = function(name, param)
         if param and (param == "linear" or param == "simplespline") then
             syncpath.mode = param
+            refresh_path_beams()
         else
             minetest.chat_send_player(name, "[syncpath] Current interpolation mode: " .. tostring(syncpath.mode))
         end
