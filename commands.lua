@@ -1,6 +1,18 @@
 
 local mod_storage = minetest.get_mod_storage()
 
+-- Reminder to save!
+local unsaved_changes = false
+local save_reminder_timer = 0
+minetest.register_globalstep(function(dtime)
+    if unsaved_changes then
+        save_reminder_timer = save_reminder_timer + dtime
+    end
+    if save_reminder_timer > 60 then
+        save_reminder_timer = 0
+        minetest.chat_send_all("[syncpath] You have unsaved changes! Remember to save your work with '/save'")
+    end
+end)
 
 minetest.register_chatcommand("spawn_ride", {
     description = "Spawn a sync ride",
@@ -24,6 +36,18 @@ minetest.register_chatcommand("toggle_sync", {
     end
 })
 
+minetest.register_chatcommand("music", {
+    description = "Set or display the music for the sync",
+    func = function(name, param)
+        if param then
+            syncpath.music_name = param
+            minetest.chat_send_player(name, "[syncpath] Music set to " .. param .. ".ogg. If this doesn't work, doublecheck the filename is correct and that it is located in the sounds folder.")
+        else
+            minetest.chat_send_player(name, "[syncpath] Music is currently set to '" .. syncpath.music_name .. ".ogg'")
+        end
+    end
+})
+
 minetest.register_chatcommand("sync", {
     description = "Start a sync ride, attach the player to the ride, and start the music",
     func = function(name, param)
@@ -33,15 +57,19 @@ minetest.register_chatcommand("sync", {
         minetest.get_player_by_name(name):set_attach(obj)
 
         syncpath.active = true
-        local start_time_offset = tonumber(args[2] or 0) / 60 * syncpath.bpm
+        local start_time_offset = tonumber(args[1] or 0) / 60 * syncpath.bpm
         syncpath.starttime = minetest.get_us_time() / 1000000 - start_time_offset
 
         if syncpath.music_handle then
             minetest.sound_stop(syncpath.music_handle)
         end
-        syncpath.music_handle = minetest.sound_play({name = args[1] or ""}, {object = minetest.get_player_by_name(name), start_time = start_time_offset}, false)
+        syncpath.music_handle = minetest.sound_play({name = syncpath.music_name}, {object = minetest.get_player_by_name(name), start_time = start_time_offset}, false)
 
-        minetest.chat_send_player(name, "[syncpath] Sync started. Playing '" .. (args[1] or "") .. "' from bar " .. (args[2] or 0) .. " at " .. syncpath.bpm .. " bpm")
+        if args[1] or syncpath.bpm ~= 140 or syncpath.music_name ~= "" then
+            minetest.chat_send_player(name, "[syncpath] Sync started.")
+        else
+            minetest.chat_send_player(name, "[syncpath] Sync started.")
+        end
     end
 })
 
@@ -233,6 +261,7 @@ minetest.register_chatcommand("add_keyframe", {
             minetest.chat_send_player(name, "[syncpath] Keyframe added on bar " .. bar .. " on index " .. insert_pos)
             syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
             syncpath.refresh_path_beams()
+            unsaved_changes = true
         else
             minetest.chat_send_player(name, "[syncpath] Please provide a bar number to add this keyframe on")
         end
@@ -250,6 +279,7 @@ minetest.register_chatcommand("remove_keyframe", {
                     minetest.chat_send_player(name, "[syncpath] Removed keyframe at bar " .. bar)
                     syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
                     syncpath.refresh_path_beams()
+                    unsaved_changes = true
                     break
                 end
             end
@@ -308,8 +338,10 @@ minetest.register_chatcommand("bpm", {
     func = function(name, param)
         if param and tonumber(param) then
             syncpath.bpm = tonumber(param)
+            minetest.chat_send_player(name, "[syncpath] BPM set to " .. tostring(syncpath.bpm))
+            unsaved_changes = true
         else
-            minetest.chat_send_player(name, "[syncpath] Current bpm: " .. tostring(syncpath.bpm))
+            minetest.chat_send_player(name, "[syncpath] Current BPM: " .. tostring(syncpath.bpm))
         end
     end
 })
@@ -331,7 +363,7 @@ minetest.register_chatcommand("interp_mode", {
 ---
 
 minetest.register_chatcommand("save_path", {
-    description = "Save the current path under <name>",
+    description = "Save the current path under <name>. DEPRECATED",
     func = function(name, param)
         if param then
             mod_storage:set_string(param, minetest.serialize(syncpath.path))
@@ -343,7 +375,7 @@ minetest.register_chatcommand("save_path", {
 })
 
 minetest.register_chatcommand("load_path", {
-    description = "Save the current path under <name>",
+    description = "Load the current path under <name>. DEPRECATED",
     func = function(name, param)
         if param then
             syncpath.path = minetest.deserialize(mod_storage:get_string(param))
@@ -362,5 +394,66 @@ minetest.register_chatcommand("load_path", {
         else
             minetest.chat_send_player(name, "[syncpath] No path name given")
         end
+    end
+})
+
+minetest.register_chatcommand("save", {
+    description = "Save the current path under <name>. If no name is given but the track has been previously saved, save it under the same name.",
+    func = function(name, param)
+        if param then
+            syncpath.name = param
+        else
+            if not syncpath.name then
+                minetest.chat_send_player(name, "[syncpath] Please give a name for the path. Once the path is saved once, you can use '/save' by itself to save it to the same name.")
+                return
+            end
+        end
+        local data = {
+            name = syncpath.name,
+            music_name = syncpath.music_name,
+            bpm = syncpath.bpm,
+            path = syncpath.path,
+        }
+        mod_storage:set_string(syncpath.name, minetest.serialize(data))
+        minetest.chat_send_player(name, "[syncpath] Path saved as '"..syncpath.name.."'")
+        unsaved_changes = false
+    end
+})
+
+minetest.register_chatcommand("load", {
+    description = "Load the path named <name>.",
+    func = function(name, param)
+        if param then
+            local data = minetest.deserialize(mod_storage:get_string(param))
+            if data then
+                syncpath.name = data.name
+                syncpath.music_name = data.music_name
+                syncpath.bpm = data.bpm
+                syncpath.path = data.path
+
+                for i, keyframe in pairs(syncpath.path) do
+                    keyframe.position = vector.new(keyframe.position.x, keyframe.position.y, keyframe.position.z)
+                    keyframe.interpolation = keyframe.interpolation or "linear"
+                end
+                syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+                syncpath.refresh_path_beams()
+                minetest.chat_send_player(name, "[syncpath] Loaded path '"..param.."'")
+            else
+                minetest.chat_send_player(name, "[syncpath] Path '"..param.."' does not exist or could not be parsed")
+            end
+        else
+            minetest.chat_send_player(name, "[syncpath] No path name given")
+        end
+    end
+})
+
+minetest.register_chatcommand("new", {
+    description = "Erase the old path and start a new one.",
+    func = function(name)
+        syncpath.name = nil
+        syncpath.music_name = ""
+        syncpath.bpm = 140
+        syncpath.path = {}
+        minetest.chat_send_player(name, "[syncpath] New path project created")
     end
 })

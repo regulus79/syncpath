@@ -6,6 +6,8 @@ syncpath.bpm = 140
 syncpath.active = false
 syncpath.starttime = 0
 syncpath.music_handle = nil
+syncpath.music_name = ""
+syncpath.name = nil
 
 syncpath.show_keyframes = true
 syncpath.show_path_beams = true
@@ -95,11 +97,15 @@ minetest.register_entity("syncpath:ride", {
             end
         end
         for _, obj in pairs(self.object:get_children()) do
-            if obj:is_player() and obj:get_player_control_bits() ~= 0 then
-                obj:set_detach()
-                minetest.sound_stop(syncpath.music_handle)
-                self.object:remove()
-                return
+            if obj:is_player() then
+                local control = obj:get_player_control()
+                if control.up or control.down or control.left or control.right then
+                    obj:set_detach()
+                    minetest.sound_stop(syncpath.music_handle)
+                    minetest.chat_send_player(obj:get_player_name(), "[syncpath] Sync stopped because the user moved.")
+                    self.object:remove()
+                    return
+                end
             end
         end
     end,
@@ -107,3 +113,4 @@ minetest.register_entity("syncpath:ride", {
 
 dofile(minetest.get_modpath("syncpath") .. "/commands.lua")
 dofile(minetest.get_modpath("syncpath") .. "/short_commands.lua")
+dofile(minetest.get_modpath("syncpath") .. "/tutorial.lua")
