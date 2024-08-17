@@ -189,7 +189,7 @@ minetest.register_chatcommand("visuals", {
         syncpath.show_keyframes = syncpath.show_path_beams
         syncpath.refresh_path_beams()
         syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
-        minetest.chat_send_player(name, "[syncpath] Path visualization" .. syncpath.show_path_beams and "enabled." or "disabled.")
+        minetest.chat_send_player(name, "[syncpath] Path visualization" .. (syncpath.show_path_beams and "enabled." or "disabled."))
     end
 })
 
