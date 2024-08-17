@@ -118,7 +118,7 @@ minetest.register_entity("syncpath:path_beam", {
     initial_properties = {
         visual = "mesh",
         mesh = "cylinder.obj",
-        textures = {"default_steel_block.png^[opacity:200"},
+        textures = {"path.png^[opacity:200"},
         use_texture_alpha = true,
     },
     _path_id = -1,
