@@ -10,7 +10,7 @@ syncpath.music_handle = nil
 syncpath.show_keyframes = true
 syncpath.show_path_beams = false
 
-syncpath.min_beam_segments = 4
+syncpath.min_beam_segments = 8
 -- Using a random value every time the path beams are upadated so that the old entities know if they need to be removed.
 syncpath.random_path_id = nil
 
@@ -48,12 +48,10 @@ local path_function = function(synctime)
         local prev_keyframe = syncpath.path[i-1]
         local prev_keyframe_time = prev_keyframe.bar * 4 / syncpath.bpm * 60
         local t = (synctime - prev_keyframe_time) / (keyframe_time - prev_keyframe_time)
-        if syncpath.mode == "linear" then
+        if i == 2 and t <= 0.5 or i == #syncpath.path and t >= 0.5 or keyframe.interpolation == "linear" and t >= 0.5 or prev_keyframe.interpolation == "linear" and t <= 0.5 then
             return lerp(prev_keyframe.position, keyframe.position, t)
-        elseif syncpath.mode == "simplespline" then
-            if i == 2 and t <= 0.5  or i == #syncpath.path and t >= 0.5 then
-                return lerp(prev_keyframe.position, keyframe.position, t)
-            elseif t >= 0.5 then
+        else -- TODO make the if statements make more sense
+            if t >= 0.5 then
                 local next_keyframe = syncpath.path[i+1]
                 -- TODO rename. these are not really handles, but more like the actual anchor points, since the path actually goes through these, not the keyframe positions.
                 local handle1 = lerp(prev_keyframe.position, keyframe.position, 0.5)
@@ -312,9 +310,12 @@ minetest.register_chatcommand("hide_keyframes", {
 
 minetest.register_chatcommand("add_keyframe", {
     description = "Add a keyframe for the position of the ride at time <bar>, given by the current bpm.",
-    func = function(name, param)
+    func = function(name, params)
         local position = minetest.get_player_by_name(name):get_pos()
-        local bar = tonumber(param)
+        local args = string.split(params, " ")
+        local bar = tonumber(args[1])
+        local interpolation = args[2] or "linear"
+        minetest.debug(interpolation, interpolation == "simple")
         if bar then
             local insert_pos = #syncpath.path + 1
             -- Remove any duplicates
@@ -325,7 +326,7 @@ minetest.register_chatcommand("add_keyframe", {
                 end
             end
             -- Find the proper position to insert this keyframe
-            for i, keyframe in pairs(syncpath.path) do
+            for i, keyframe in ipairs(syncpath.path) do
                 if i == 1 then
                     if keyframe.bar > bar then
                         insert_pos = i
@@ -336,7 +337,8 @@ minetest.register_chatcommand("add_keyframe", {
             end
             table.insert(syncpath.path, insert_pos, {
                 bar = bar,
-                position = position
+                position = position,
+                interpolation = interpolation,
             })
             minetest.chat_send_player(name, "[syncpath] Keyframe added on bar " .. bar .. " on index " .. insert_pos)
             refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
@@ -423,7 +425,7 @@ minetest.register_chatcommand("bpm", {
 })
 
 minetest.register_chatcommand("interp_mode", {
-    description = "Show or set the interpolation mode of the syncpath. Options: linear, simplespline",
+    description = "Show or set the interpolation mode of the syncpath. Options: linear, simplespline. DEPRECATED",
     func = function(name, param)
         if param and (param == "linear" or param == "simplespline") then
             syncpath.mode = param
@@ -458,6 +460,7 @@ minetest.register_chatcommand("load_path", {
             if syncpath.path then
                 for i, keyframe in pairs(syncpath.path) do
                     keyframe.position = vector.new(keyframe.position.x, keyframe.position.y, keyframe.position.z)
+                    keyframe.interpolation = keyframe.interpolation or "linear"
                 end
                 refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
                 refresh_path_beams()
