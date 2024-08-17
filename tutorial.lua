@@ -22,8 +22,8 @@ Awesome, now type '/sync' to view your creation!
 
 ]]
 
-minetest.register_on_joinplayer(function(name)
-    minetest.chat_send_player(name, "[syncpath] If this is your first time using syncpath, it is recommended to check out the tutorial by typing '/tutorial'")
+minetest.register_on_joinplayer(function(player)
+    minetest.chat_send_player(player:get_player_name(), "[syncpath] If this is your first time using syncpath, it is recommended to check out the tutorial by typing '/tutorial'")
 end)
 
 local tutorial_active = false
