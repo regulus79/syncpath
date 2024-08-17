@@ -14,28 +14,6 @@ minetest.register_globalstep(function(dtime)
     end
 end)
 
-minetest.register_chatcommand("spawn_ride", {
-    description = "Spawn a sync ride",
-    func = function(name)
-        local pos = minetest.get_player_by_name(name):get_pos()
-        minetest.add_entity(pos, "syncpath:ride")
-    end
-})
-
-
-minetest.register_chatcommand("toggle_sync", {
-    description = "Start or stop the sync ride movement",
-    func = function(name)
-        syncpath.active = not syncpath.active
-        syncpath.starttime = minetest.get_us_time() / 1000000
-        if syncpath.active then
-            minetest.chat_send_player(name, "[syncpath] Syncpath movement started")
-        else
-            minetest.chat_send_player(name, "[syncpath] Syncpath movement stopped")
-        end
-    end
-})
-
 minetest.register_chatcommand("music", {
     description = "Set or display the music for the sync",
     func = function(name, param)
@@ -74,18 +52,6 @@ minetest.register_chatcommand("sync", {
         else
             minetest.chat_send_player(name, "[syncpath] Sync started.")
         end
-    end
-})
-
-minetest.register_chatcommand("stop_sync", {
-    description = "Stop the sync ride and the music",
-    func = function(name, param)
-        syncpath.active = false
-        minetest.get_player_by_name(name):set_detach(obj)
-        if syncpath.music_handle then
-            minetest.sound_stop(syncpath.music_handle)
-        end
-        minetest.chat_send_player(name, "[syncpath] Sync stopped")
     end
 })
 
@@ -322,18 +288,6 @@ minetest.register_chatcommand("bpm", {
     end
 })
 
-minetest.register_chatcommand("interp_mode", {
-    description = "Show or set the interpolation mode of the syncpath. Options: linear, simplespline. DEPRECATED",
-    func = function(name, param)
-        if param and (param == "linear" or param == "simplespline") then
-            syncpath.mode = param
-            syncpath.refresh_path_beams()
-        else
-            minetest.chat_send_player(name, "[syncpath] Current interpolation mode: " .. tostring(syncpath.mode))
-        end
-    end
-})
-
 minetest.register_chatcommand("interpolation", {
     description = "Set the interpolation mode of every keyframe. Options: linear, smooth.",
     func = function(name, param)
@@ -355,7 +309,7 @@ minetest.register_chatcommand("interpolation", {
 ---
 
 minetest.register_chatcommand("save_path", {
-    description = "Save the current path under <name>. DEPRECATED",
+    description = "Save the current path under <name>. DEPRECATED, use /save instead",
     func = function(name, param)
         if param then
             mod_storage:set_string(param, minetest.serialize(syncpath.path))
@@ -367,7 +321,7 @@ minetest.register_chatcommand("save_path", {
 })
 
 minetest.register_chatcommand("load_path", {
-    description = "Load the current path under <name>. DEPRECATED",
+    description = "Load the current path under <name>. DEPRECATED, use /load instead",
     func = function(name, param)
         if param then
             syncpath.path = minetest.deserialize(mod_storage:get_string(param))

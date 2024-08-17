@@ -1,7 +1,6 @@
 syncpath = {}
 
 syncpath.path = {}
-syncpath.mode = "linear"
 syncpath.bpm = 140
 syncpath.active = false
 syncpath.starttime = 0
