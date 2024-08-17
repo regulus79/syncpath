@@ -93,40 +93,6 @@ minetest.register_chatcommand("stop_sync", {
 --- Visualization
 ---
 
-minetest.register_entity("syncpath:path_beam", {
-    initial_properties = {
-        visual = "mesh",
-        mesh = "cylinder.obj",
-        textures = {"default_steel_block.png^[opacity:200"},
-        use_texture_alpha = true,
-    },
-    _path_id = -1,
-    _staticdata = nil,
-    on_activate = function(self, staticdata_serialized)
-        self._staticdata = staticdata_serialized
-        local staticdata = minetest.deserialize(staticdata_serialized)
-        if staticdata then
-            if staticdata.offset then
-                self.object:set_rotation(vector.dir_to_rotation(staticdata.offset))
-                local props = self.object:get_properties()
-                props.visual_size = vector.new(0.5, 0.5, vector.length(staticdata.offset)) * 10
-                self.object:set_properties(props)
-            end
-            if staticdata.path_id then
-                self._path_id = staticdata.path_id
-            end
-        end
-    end,
-    get_staticdata = function(self)
-        return self._staticdata
-    end,
-    on_step = function(self)
-        if syncpath.random_path_id ~= self._path_id then
-            self.object:remove()
-        end
-    end
-})
-
 local path_beams = {}
 
 local setup_path_beams = function()
