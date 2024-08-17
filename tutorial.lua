@@ -22,6 +22,10 @@ Awesome, now type '/sync' to view your creation!
 
 ]]
 
+minetest.register_on_joinplayer(function(name)
+    minetest.chat_send_player(name, "[syncpath] If this is your first time using syncpath, it is recommended to check out the tutorial by typing '/tutorial'")
+end)
+
 local tutorial_active = false
 local state = 0
 
@@ -51,7 +55,8 @@ local next_tutorial_state = function(name)
     elseif state == 3 then
         tutorial_message(name, "[tutorial] Not too bad! Now make your path longer by adding a couple more keyframes again with '/add_keyframe' or '/addkf'", 3)
     elseif state == 4 then
-        tutorial_message(name, "[tutorial] Tip: If you placed a keyframe where you didn't want it to go, you can use '/remove_keyframe <bar number>' to remove it. Or for short, '/rmkf <bar number>'", 3)
+        tutorial_message(name, "[tutorial] Tip: If you want to remove a keyframe, you can use '/remove_keyframe <bar number>' to remove it. Or for short, '/rmkf <bar number>'", 3)
+        tutorial_message(name, "[tutorial] If you want to move a keyframe, simply run '/add_keyframe' again with the same bar number", 6)
         --tutorial_message(name, "[tutorial] If you want a keyframe to be smooth instead of a jagged corner, use '/add_keyframe <bar number> smooth'.", 13)
     elseif state == 5 then
         tutorial_message(name, "[tutorial] This path is looking great! Let's get some music going!", 1)
