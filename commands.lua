@@ -211,6 +211,8 @@ minetest.register_chatcommand("add_keyframe", {
                 if bar == keyframe.bar then
                     minetest.chat_send_player(name, "[syncpath] Bar " .. bar .. " already has a keyframe. Replacing...")
                     table.remove(syncpath.path, i)
+                    -- Need to update insert_pos right here in case we deleted the only keyframe, which would mean the loop below would never run.
+                    insert_pos = i
                 end
             end
             -- Find the proper position to insert this keyframe
