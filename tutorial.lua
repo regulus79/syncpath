@@ -49,21 +49,24 @@ local next_tutorial_state = function(name)
     elseif state == 2 then
         tutorial_message(name, "[tutorial] Great! now test out your path with '/sync'", 1)
     elseif state == 3 then
-        tutorial_message(name, "[tutorial] Not too bad! Now make your path longer by adding a couple more keyframes again with '/add_keyframe <bar number>' or '/addkf <bar number>'", 3)
+        tutorial_message(name, "[tutorial] Not too bad! Now make your path longer by adding a couple more keyframes again with '/add_keyframe' or '/addkf'", 3)
     elseif state == 4 then
-        tutorial_message(name, "[tutorial] If you placed a keyframe where you didn't want it to go, you can use '/remove_keyframe <bar number>' to remove it. Or for short, '/rmkf <bar number>'", 3)
-        tutorial_message(name, "[tutorial] If you want a keyframe to be smooth instead of a jagged corner, use '/add_keyframe <bar number> smooth'.", 13)
+        tutorial_message(name, "[tutorial] Tip: If you placed a keyframe where you didn't want it to go, you can use '/remove_keyframe <bar number>' to remove it. Or for short, '/rmkf <bar number>'", 3)
+        --tutorial_message(name, "[tutorial] If you want a keyframe to be smooth instead of a jagged corner, use '/add_keyframe <bar number> smooth'.", 13)
     elseif state == 5 then
         tutorial_message(name, "[tutorial] This path is looking great! Let's get some music going!", 1)
         tutorial_message(name, "[tutorial] To add music, type '/music <name of sound file>'. The mod comes with a few default tracks, so let's use those.", 3)
-        tutorial_message(name, "[tutorial] Type '/music real15' to use real15.ogg. If you want to use your own music, put the sound file in the 'sounds' folder in the mod and then restart. Sounds must be converted to .ogg format before minetest can recognize them.", 6)
+        tutorial_message(name, "[tutorial] Type '/music real15' to use real15.ogg. If you want to use your own music, put the sound file in the 'sounds' folder in the mod and then restart the game. Sound files must be converted to .ogg format before minetest can recognize them.", 6)
     elseif state == 6 then
-        tutorial_message(name, "[tutorial] Oh also, we need to set the BPM of the music. 'real15' is 120 bpm, so type '/bpm 120'", 1)
+        tutorial_message(name, "[tutorial] Oh also, we need to set the BPM of the music. 'real15.ogg' is 120 bpm, so type '/bpm 120'", 1)
     elseif state == 7 then
         tutorial_message(name, "[tutorial] Awesome, now type '/sync' to view your creation!", 1)
     elseif state == 8 then
         tutorial_message(name, "[tutorial] If you want to hide the path visuals, type '/visuals'", 4)
-        tutorial_message(name, "[tutorial] You've reached the end of the tutorial!", 10)
+        tutorial_message(name, "[tutorial] A few more tips: If you want a corner to be smooth instead of a jagged, use '/add_keyframe <bar number> smooth' or '/addkf <bar number> smooth'.", 13)
+        tutorial_message(name, "[tutorial] If you want to teleport to a certain bar on the path, for example bar 2.5, then use '/view_bar 2.5''. This can be useful for placing blocks in sync to the music.", 18)
+        tutorial_message(name, "[tutorial] You can see a full list of commands by doing '/help'", 23)
+        tutorial_message(name, "[tutorial] Other than that, you've reached the end of the tutorial!", 28)
         tutorial_active = false
     end
 

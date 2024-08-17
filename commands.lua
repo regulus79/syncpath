@@ -41,7 +41,7 @@ minetest.register_chatcommand("music", {
     func = function(name, param)
         if param then
             syncpath.music_name = param
-            minetest.chat_send_player(name, "[syncpath] Music set to " .. param .. ".ogg. If this doesn't work, doublecheck the filename is correct and that it is located in the sounds folder.")
+            minetest.chat_send_player(name, "[syncpath] Music set to " .. param .. ".ogg")
         else
             minetest.chat_send_player(name, "[syncpath] Music is currently set to '" .. syncpath.music_name .. ".ogg'")
         end
@@ -51,6 +51,10 @@ minetest.register_chatcommand("music", {
 minetest.register_chatcommand("sync", {
     description = "Start a sync ride, attach the player to the ride, and start the music",
     func = function(name, param)
+        if #syncpath.path == 0 then
+            minetest.chat_send_player(name, "[syncpath] No path is currently loaded.")
+            return
+        end
         local args = string.split(param, " ")
         local pos = minetest.get_player_by_name(name):get_pos()
         local obj = minetest.add_entity(pos, "syncpath:ride")
@@ -180,7 +184,7 @@ local setup_keyframe_hud_waypoints = function(player)
             name = "Bar " .. keyframe.bar,
             world_pos = keyframe.position,
             z_index = -300,
-            number = 0*(256^2) + 255*(256^1) + 0*(256^0)
+            number = keyframe.interpolation == "linear" and (0*(256^2) + 255*(256^1) + 0*(256^0)) or (0*(256^2) + 0*(256^1) + 255*(256^0))
         })
         table.insert(waypoint_ids, id)
     end
@@ -219,6 +223,7 @@ minetest.register_chatcommand("visuals", {
         syncpath.show_keyframes = syncpath.show_path_beams
         syncpath.refresh_path_beams()
         syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+        minetest.chat_send_player(name, "[syncpath] Path visualization" .. syncpath.show_path_beams and "enabled." or "disabled.")
     end
 })
 
@@ -233,13 +238,12 @@ minetest.register_chatcommand("add_keyframe", {
         local args = string.split(params, " ")
         local bar = tonumber(args[1])
         local interpolation = args[2] or "linear"
-        minetest.debug(interpolation, interpolation == "simple")
         if bar then
             local insert_pos = #syncpath.path + 1
             -- Remove any duplicates
             for i, keyframe in pairs(syncpath.path) do
                 if bar == keyframe.bar then
-                    minetest.chat_send_player(name, "[syncpath] Bar " .. bar .. " already has a keyframe (index " .. i .. "). Replacing")
+                    minetest.chat_send_player(name, "[syncpath] Bar " .. bar .. " already has a keyframe. Replacing...")
                     table.remove(syncpath.path, i)
                 end
             end
@@ -248,9 +252,13 @@ minetest.register_chatcommand("add_keyframe", {
                 if i == 1 then
                     if keyframe.bar > bar then
                         insert_pos = i
+                        break
                     end
                 elseif syncpath.path[i-1].bar < bar and keyframe.bar > bar then
                     insert_pos = i
+                    break
+                elseif i == #syncpath.path and keyframe.bar < bar then
+                    insert_pos = #syncpath.path + 1
                 end
             end
             table.insert(syncpath.path, insert_pos, {
@@ -258,7 +266,7 @@ minetest.register_chatcommand("add_keyframe", {
                 position = position,
                 interpolation = interpolation,
             })
-            minetest.chat_send_player(name, "[syncpath] Keyframe added on bar " .. bar .. " on index " .. insert_pos)
+            minetest.chat_send_player(name, "[syncpath] Keyframe added on bar " .. bar)
             syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
             syncpath.refresh_path_beams()
             unsaved_changes = true
@@ -358,6 +366,22 @@ minetest.register_chatcommand("interp_mode", {
     end
 })
 
+minetest.register_chatcommand("interpolation", {
+    description = "Set the interpolation mode of every keyframe. Options: linear, smooth.",
+    func = function(name, param)
+        if param and (param == "linear" or param == "smooth") then
+            for i, keyframe in pairs(syncpath.path) do
+                keyframe.interpolation = param
+            end
+            syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+            syncpath.refresh_path_beams()
+            unsaved_changes = true
+        else
+            minetest.chat_send_player(name, "[syncpath] Invalid interpolation mode. Options are 'linear' and 'smooth'")
+        end
+    end
+})
+
 ---
 --- Saving/Loading
 ---
@@ -400,11 +424,11 @@ minetest.register_chatcommand("load_path", {
 minetest.register_chatcommand("save", {
     description = "Save the current path under <name>. If no name is given but the track has been previously saved, save it under the same name.",
     func = function(name, param)
-        if param then
+        if param and param ~= "" then
             syncpath.name = param
         else
             if not syncpath.name then
-                minetest.chat_send_player(name, "[syncpath] Please give a name for the path. Once the path is saved once, you can use '/save' by itself to save it to the same name.")
+                minetest.chat_send_player(name, "[syncpath] Please provide a name for the project with '/save <name>'. After it is saved once, you can use '/save' by itself to save it to the same name.")
                 return
             end
         end
@@ -423,7 +447,7 @@ minetest.register_chatcommand("save", {
 minetest.register_chatcommand("load", {
     description = "Load the path named <name>.",
     func = function(name, param)
-        if param then
+        if param and param ~= "" then
             local data = minetest.deserialize(mod_storage:get_string(param))
             if data then
                 syncpath.name = data.name
@@ -435,6 +459,8 @@ minetest.register_chatcommand("load", {
                     keyframe.position = vector.new(keyframe.position.x, keyframe.position.y, keyframe.position.z)
                     keyframe.interpolation = keyframe.interpolation or "linear"
                 end
+                syncpath.show_path_beams = true
+                syncpath.show_keyframes = true
                 syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
                 syncpath.refresh_path_beams()
                 minetest.chat_send_player(name, "[syncpath] Loaded path '"..param.."'")
@@ -448,12 +474,12 @@ minetest.register_chatcommand("load", {
 })
 
 minetest.register_chatcommand("new", {
-    description = "Erase the old path and start a new one.",
+    description = "Start a new project.",
     func = function(name)
         syncpath.name = nil
         syncpath.music_name = ""
         syncpath.bpm = 140
         syncpath.path = {}
-        minetest.chat_send_player(name, "[syncpath] New path project created")
+        minetest.chat_send_player(name, "[syncpath] New project created")
     end
 })

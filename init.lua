@@ -102,7 +102,10 @@ minetest.register_entity("syncpath:ride", {
                 if control.up or control.down or control.left or control.right then
                     obj:set_detach()
                     minetest.sound_stop(syncpath.music_handle)
-                    minetest.chat_send_player(obj:get_player_name(), "[syncpath] Sync stopped because the user moved.")
+                    if syncpath.active then
+                        syncpath.active = false
+                        minetest.chat_send_player(obj:get_player_name(), "[syncpath] Sync stopped because the user moved.")
+                    end
                     self.object:remove()
                     return
                 end
