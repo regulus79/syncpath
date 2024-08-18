@@ -412,6 +412,8 @@ minetest.register_chatcommand("new", {
         syncpath.music_name = ""
         syncpath.bpm = 140
         syncpath.path = {}
+        syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
+        syncpath.refresh_path_beams()
         minetest.chat_send_player(name, "[syncpath] New project created")
     end
 })
