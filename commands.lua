@@ -16,6 +16,7 @@ end)
 
 minetest.register_chatcommand("music", {
     description = "Set or display the music for the sync",
+    params = "<sound file name without extension>",
     func = function(name, param)
         if param then
             syncpath.music_name = param
@@ -164,7 +165,8 @@ minetest.register_chatcommand("visuals", {
 ---
 
 minetest.register_chatcommand("add_keyframe", {
-    description = "Add a keyframe for the position of the ride at time <bar>, given by the current bpm.",
+    description = "Add a keyframe for the position of the ride at time <bar>, given by the current bpm. Optionally specify if the keyframe should have linear or smooth interpolation.",
+    params = "<bar> [linear | smooth]",
     func = function(name, params)
         local position = minetest.get_player_by_name(name):get_pos()
         local args = string.split(params, " ")
@@ -212,6 +214,7 @@ minetest.register_chatcommand("add_keyframe", {
 
 minetest.register_chatcommand("remove_keyframe", {
     description = "Remove the keyframe at time <bar>, given by the current bpm.",
+    params = "<bar>",
     func = function(name, param)
         local bar = tonumber(param)
         if bar then
@@ -246,6 +249,7 @@ minetest.register_chatcommand("print_path", {
 
 minetest.register_chatcommand("view_bar", {
     description = "Teleport to the position on the path at the given bar",
+    params = "<bar>",
     func = function(name, param)
         local bar = tonumber(param)
         if bar then
@@ -260,6 +264,7 @@ minetest.register_chatcommand("view_bar", {
 
 minetest.register_chatcommand("view_time", {
     description = "Teleport to the position on the path at the given time. The same as /view_bar, but in terms of seconds instead of bars.",
+    params = "<seconds>",
     func = function(name, param)
         local synctime = tonumber(param)
         if synctime then
@@ -277,6 +282,7 @@ minetest.register_chatcommand("view_time", {
 
 minetest.register_chatcommand("bpm", {
     description = "Show or set the bpm of the syncpath",
+    params = "[<bpm>]",
     func = function(name, param)
         if param and tonumber(param) then
             syncpath.bpm = tonumber(param)
@@ -290,6 +296,7 @@ minetest.register_chatcommand("bpm", {
 
 minetest.register_chatcommand("interpolation", {
     description = "Set the interpolation mode of every keyframe. Options: linear, smooth.",
+    params = "[linear | smooth]",
     func = function(name, param)
         if param and (param == "linear" or param == "smooth") then
             for i, keyframe in pairs(syncpath.path) do
@@ -345,6 +352,7 @@ minetest.register_chatcommand("load_path", {
 
 minetest.register_chatcommand("save", {
     description = "Save the current path under <name>. If no name is given but the track has been previously saved, save it under the same name.",
+    params = "[<name>]",
     func = function(name, param)
         if param and param ~= "" then
             syncpath.name = param
@@ -368,6 +376,7 @@ minetest.register_chatcommand("save", {
 
 minetest.register_chatcommand("load", {
     description = "Load the path named <name>.",
+    params = "<name>",
     func = function(name, param)
         if param and param ~= "" then
             local data = minetest.deserialize(mod_storage:get_string(param))
