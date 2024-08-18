@@ -1,6 +1,6 @@
 # syncpath
 
-Syncpath is a mod for animating the player position along a path to be synced to music. Useful for making music-sync videos or cinematic fly-overs.
+Syncpath is a mod for animating the player position along a path to be synced to music. Use it for making music-sync videos or cinematic fly-overs!
 
 Supports both linear interpolation and a simple spline interpolation via double-lerping between the midpoints and corner of two segments.
 
