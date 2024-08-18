@@ -29,6 +29,7 @@ minetest.register_chatcommand("music", {
 
 minetest.register_chatcommand("sync", {
     description = "Start a sync ride, attach the player to the ride, and start the music",
+    params = "[<starting bar>]",
     func = function(name, param)
         if #syncpath.path == 0 then
             minetest.chat_send_player(name, "[syncpath] No path is currently loaded.")
@@ -296,7 +297,7 @@ minetest.register_chatcommand("bpm", {
 
 minetest.register_chatcommand("interpolation", {
     description = "Set the interpolation mode of every keyframe. Options: linear, smooth.",
-    params = "[linear | smooth]",
+    params = "(linear | smooth)",
     func = function(name, param)
         if param and (param == "linear" or param == "smooth") then
             for i, keyframe in pairs(syncpath.path) do
