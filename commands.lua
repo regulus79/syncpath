@@ -165,7 +165,7 @@ minetest.register_chatcommand("visuals", {
 ---
 
 minetest.register_chatcommand("add_keyframe", {
-    description = "Add a keyframe for the position of the ride at time <bar>, given by the current bpm. Optionally specify if the keyframe should have linear or smooth interpolation.",
+    description = "Add a keyframe for the position of the ride on bar <bar>, given by the current bpm. Optionally specify if the keyframe should have linear or smooth interpolation.",
     params = "<bar> [linear | smooth]",
     func = function(name, params)
         local position = minetest.get_player_by_name(name):get_pos()
@@ -213,7 +213,7 @@ minetest.register_chatcommand("add_keyframe", {
 })
 
 minetest.register_chatcommand("remove_keyframe", {
-    description = "Remove the keyframe at time <bar>, given by the current bpm.",
+    description = "Remove the keyframe on bar <bar>, given by the current bpm.",
     params = "<bar>",
     func = function(name, param)
         local bar = tonumber(param)
@@ -221,7 +221,7 @@ minetest.register_chatcommand("remove_keyframe", {
             for i, keyframe in pairs(syncpath.path) do
                 if keyframe.bar == bar then
                     table.remove(syncpath.path, i)
-                    minetest.chat_send_player(name, "[syncpath] Removed keyframe at bar " .. bar)
+                    minetest.chat_send_player(name, "[syncpath] Removed keyframe on bar " .. bar)
                     syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
                     syncpath.refresh_path_beams()
                     unsaved_changes = true
