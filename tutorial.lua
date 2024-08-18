@@ -81,6 +81,7 @@ local next_tutorial_state = function(name)
     elseif state == 16 then
         tutorial_message(name, "[tutorial] Back to normal! Ok, one last thing. You can use '/view_bar <bar>' to teleport to the part of the track at a certain bar. (short version: '/vb <bar>')", 1)
         tutorial_message(name, "[tutorial] So if you want to precisely place blocks every quarter bar to sync to your music, then you can do '/vb 0', place a block, '/vb 0.25', place a block '/vb 0.5', place a block, etc...", 8)
+        tutorial_message(name, "[tutorial] Also, if you are working on syncing a long song, for '/sync' you can add the starting bar as an argument, so '/sync 32' would seek to bar 32.", 16)
         tutorial_message(name, "[tutorial] There are a few more commands we didn't cover, but you can see a full list using '/help'", 16)
         tutorial_message(name, "[tutorial] Oh also, don't forget to save your work! Do '/save my_awesome_track', and then when you rejoin do '/load my_awesome_track' to load your project.", 20)
         tutorial_message(name, "[tutorial] (ALSO you can do '/new' to create a blank project)", 25)
