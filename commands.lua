@@ -8,7 +8,7 @@ minetest.register_globalstep(function(dtime)
     if unsaved_changes then
         save_reminder_timer = save_reminder_timer + dtime
     end
-    if save_reminder_timer > 60 then
+    if save_reminder_timer > 120 then
         save_reminder_timer = 0
         minetest.chat_send_all("[syncpath] You have unsaved changes! Remember to save your work with '/save'")
     end
