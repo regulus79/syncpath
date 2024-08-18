@@ -351,7 +351,7 @@ minetest.register_chatcommand("load_path", {
 })
 
 minetest.register_chatcommand("save", {
-    description = "Save the current path under <name>. If no name is given but the track has been previously saved, save it under the same name.",
+    description = "Save the current project under <name>. If no name is given but the project has been previously saved, it will be saved under the same name.",
     params = "[<name>]",
     func = function(name, param)
         if param and param ~= "" then
@@ -369,13 +369,13 @@ minetest.register_chatcommand("save", {
             path = syncpath.path,
         }
         mod_storage:set_string(syncpath.name, minetest.serialize(data))
-        minetest.chat_send_player(name, "[syncpath] Path saved as '"..syncpath.name.."'")
+        minetest.chat_send_player(name, "[syncpath] Project saved as '"..syncpath.name.."'")
         unsaved_changes = false
     end
 })
 
 minetest.register_chatcommand("load", {
-    description = "Load the path named <name>.",
+    description = "Load the project named <name>.",
     params = "<name>",
     func = function(name, param)
         if param and param ~= "" then
@@ -394,12 +394,12 @@ minetest.register_chatcommand("load", {
                 syncpath.show_keyframes = true
                 syncpath.refresh_keyframe_hud_waypoints(minetest.get_player_by_name(name))
                 syncpath.refresh_path_beams()
-                minetest.chat_send_player(name, "[syncpath] Loaded path '"..param.."'")
+                minetest.chat_send_player(name, "[syncpath] Loaded project '"..param.."'")
             else
-                minetest.chat_send_player(name, "[syncpath] Path '"..param.."' does not exist or could not be parsed")
+                minetest.chat_send_player(name, "[syncpath] Project '"..param.."' does not exist or could not be parsed")
             end
         else
-            minetest.chat_send_player(name, "[syncpath] No path name given")
+            minetest.chat_send_player(name, "[syncpath] No project name given")
         end
     end
 })
